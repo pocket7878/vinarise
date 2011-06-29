@@ -53,6 +53,7 @@ else
   let s:vinarise_BUFFER_NAME = '*vinarise*'
 endif
 "}}}
+
 " Variables  "{{{
 let s:vinarise_dicts = []
 "}}}
@@ -68,44 +69,71 @@ function! vinarise#open(filename, is_overwrite)"{{{
     edit `=s:vinarise_BUFFER_NAME . ' - ' . l:filename`
   endif
 
-  silent % delete _
+  "silent % delete _
   call s:initialize_vinarise_buffer()
 
   " Print lines.
   setlocal modifiable
 
-  python << EOF
+  if !exists('b:pageNum')
+	  let b:pageNum = 1
+  endif
+  let b:lastFileName = a:filename
+  let b:lastOverWrite = a:is_overwrite
+  if !exists('b:localBuf')
+	  let b:localBuf = []
+	  python << EOF
 import mmap, os, vim
-b = vim.current.buffer
+def vimstr(s) :
+	return "'" + s.replace("'","''") + "'"
+def vinariseFile() :
+	with open(vim.eval("l:filename"), "r+") as f:
+		# Open file by memory mapping.
+		m = mmap.mmap(f.fileno(), 0)
+		# "vim.command('let l:output = "hoge"')
 
-with open(vim.eval("l:filename"), "r+") as f:
-  # Open file by memory mapping.
-  m = mmap.mmap(f.fileno(), 0)
-  # "vim.command('let l:output = "hoge"')
+		pos = 0
+		max_lines = m.size()/16 + 1
+		for line_number in range(0, max_lines) :
+			# Make new lines.
+			hex_line = ""
+			ascii_line = ""
 
-  pos = 0
-  max_lines = m.size()/16 + 1
-  for line_number in range(0, max_lines if max_lines < 100 else 100):
-    # Make new lines.
-    hex_line = ""
-    ascii_line = ""
+			for char in m[pos : pos+16]:
+				num = ord(char)
+				hex_line += "{0:02x} ".format(num)
+				ascii_line += "." if num < 32 or num > 127 else char
+				pos += 1
 
-    for char in m[pos : pos+16]:
-      num = ord(char)
-      hex_line += "{0:02x} ".format(num)
-      ascii_line += "." if num < 32 or num > 127 else char
-      pos += 1
+			vim.command('call add(b:localBuf, %s)' % vimstr('{0:07x}0: {1:48s}|  {2:16s}  '.format(line_number, hex_line, ascii_line)))
 
-    # Add line.
-    b.append('{0:07x}0: {1:48s}|  {2:16s}  '.format(line_number, hex_line, ascii_line))
-
-  # Delete first line.
-  del b[0]
+vinariseFile()
 EOF
-
-  setlocal nomodifiable
+	endif
+	for lineNum in range((b:pageNum - 1) * 100, (b:pageNum * 100 - 1) >= (len(b:localBuf) -1) ? (len(b:localBuf) -1) : b:pageNum * 100 - 1)
+		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, b:localBuf[lineNum])
+	endfor
+	setlocal nomodifiable
 endfunction"}}}
 
+"Page change function"{{{
+function! vinarise#nextPage() 
+	if exists('b:pageNum')
+		if (b:pageNum * 100 < (len(b:localBuf) -1))
+			let b:pageNum += 1
+		endif
+	endif
+	call vinarise#open(b:lastFileName,b:lastOverWrite)
+endfunction
+
+function! vinarise#backPage() 
+	if exists('b:pageNum')
+		if (b:pageNum != 1)
+			let b:pageNum -= 1
+		endif
+	endif
+	call vinarise#open(b:lastFileName,b:lastOverWrite)
+endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
