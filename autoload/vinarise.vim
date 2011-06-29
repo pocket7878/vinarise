@@ -134,6 +134,31 @@ function! vinarise#backPage()
 	endif
 	call vinarise#open(b:lastFileName,b:lastOverWrite)
 endfunction"}}}
+
+"Cursor move function"{{{
+function! vinarise#cursorForward()
+	let l:cursorPos=getpos(".")
+	let l:nextChar=(getline(".")[(getpos(".")[2] + getpos(".")[3])])
+	if l:nextChar == " "
+		let l:cursorPos[2] += 2
+		call setpos(".", cursorPos)
+	else
+		let l:cursorPos[2] += 1
+		call setpos(".", cursorPos)
+	endif
+endfunction
+
+function! vinarise#cursorBackward()
+	let l:cursorPos=getpos(".")
+	let l:prevChar=(getline(".")[(getpos(".")[2] + getpos(".")[3]) - 2])
+	if l:prevChar == " "
+		let l:cursorPos[2] -= 2
+		call setpos(".", cursorPos)
+	else
+		let l:cursorPos[2] -= 1
+		call setpos(".", cursorPos)
+	endif
+endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
