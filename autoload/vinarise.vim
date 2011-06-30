@@ -135,7 +135,7 @@ function! vinarise#backPage()
 	call vinarise#open(b:lastFileName,b:lastOverWrite)
 endfunction"}}}
 
-"Cursor move function
+"Cursor move function"{{{
 function! vinarise#cursorForward()
 	let l:cursorPos=getpos(".")
 	let l:nextChar=(getline(".")[(getpos(".")[2] + getpos(".")[3])])
@@ -171,7 +171,7 @@ function! vinarise#moveBetweenAsciiAndHex()
 		let l:cursorPos[2] -= (51 - (l:cursorPos[2] - 62) * 2)
 		call setpos(".",cursorPos)
 	endif
-endfunction
+endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
