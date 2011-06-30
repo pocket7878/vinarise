@@ -135,7 +135,7 @@ function! vinarise#backPage()
 	call vinarise#open(b:lastFileName,b:lastOverWrite)
 endfunction"}}}
 
-"Cursor move function"{{{
+"Cursor move function
 function! vinarise#cursorForward()
 	let l:cursorPos=getpos(".")
 	let l:nextChar=(getline(".")[(getpos(".")[2] + getpos(".")[3])])
@@ -158,7 +158,20 @@ function! vinarise#cursorBackward()
 		let l:cursorPos[2] -= 1
 		call setpos(".", cursorPos)
 	endif
-endfunction"}}}
+endfunction
+
+function! vinarise#moveBetweenAsciiAndHex()
+	let l:cursorPos = getpos(".")
+	if (l:cursorPos[2] + l:cursorPos[3]) >= 11 && (l:cursorPos[2] + l:cursorPos[3]) <= 57
+		let l:cursorPos[2] -= 11
+		let l:cursorPos[2] = l:cursorPos[2] / 3
+		let l:cursorPos[2] += 62
+		call setpos(".",cursorPos)
+	elseif (l:cursorPos[2] + l:cursorPos[3]) >= 62 && (l:cursorPos[2] + l:cursorPos[3]) <= 77
+		let l:cursorPos[2] -= (51 - (l:cursorPos[2] - 62) * 2)
+		call setpos(".",cursorPos)
+	endif
+endfunction
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
