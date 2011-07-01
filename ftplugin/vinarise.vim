@@ -16,5 +16,8 @@ nmap <buffer><silent> h <Plug>(vinarise_cursorBackward)
 
 noremap <buffer><silent> <Plug>(vinarise_moveCursorBetweenAsciiAndHex) :<C-u>call vinarise#moveBetweenAsciiAndHex()<CR>
 
-
 nmap <buffer><silent> % <Plug>(vinarise_moveCursorBetweenAsciiAndHex)
+
+noremap <buffer><silent> <Plug>(vinarise_showVinaryInfo) :<C-u>call vinarise#showVinaryInfo()<CR>
+
+nmap <buffer><silent> <Leader>i <Plug>(vinarise_showVinaryInfo)

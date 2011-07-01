@@ -172,6 +172,48 @@ function! vinarise#moveBetweenAsciiAndHex()
 		call setpos(".",cursorPos)
 	endif
 endfunction"}}}
+
+"Show Hex and Ascii Info"{{{
+function! s:getHexUnderCursor()
+	let l:currentHexLine=split(strpart(getline("."),10,47))
+	let l:cursorPos = getpos(".")
+	return l:currentHexLine[(l:cursorPos[2] - 11)/3]
+endfunction
+
+function! s:getAsciiUndirCursor() 
+	let l:currentLine=getline(".")
+	let l:cursorPos = getpos(".")
+	return l:currentLine[l:cursorPos[2] - 1]
+endfunction
+
+function! vinarise#showVinaryInfo()
+	let l:cursorPos = getpos(".")[2]
+	if 11 <= l:cursorPos && l:cursorPos <= 57
+		let l:currentHex = s:getHexUnderCursor()
+		let l:binStr=''
+		let l:asciiStr=''
+		"Convert Hex to binary and ascii by Python
+		python << EOF
+import binascii,re,os,vim
+vim.command('let l:binStr = \'%s\'' % bin(int(vim.eval('l:currentHex'),16))[2:])
+def asciirepl(s):
+  return binascii.unhexlify(s)  
+
+vim.command('let l:asciiStr = \'%s\'' % asciirepl(vim.eval('l:currentHex')))
+EOF
+		echo printf("Bin: %s Dec: %d Oct: %o Hex: %x Ascii: %s", l:binStr, str2nr(l:currentHex,16),str2nr(l:currentHex,16),str2nr(l:currentHex,16), l:asciiStr)
+	elseif 62 <= l:cursorPos && l:cursorPos <= 77
+		let l:currentAscii = s:getAsciiUndirCursor()
+		let l:Dec = char2nr(l:currentAscii)
+		let l:binStr=''
+		"Convert Hex to binary and ascii by Python
+		python << EOF
+import binascii,re,os,vim
+vim.command('let l:binStr = \'%s\'' % bin(int(vim.eval('l:Dec'),10))[2:])
+EOF
+		echo printf("Bin: %s Dec: %d Oct: %o Hex: %x Ascii: %s", l:binStr, l:Dec,l:Dec,l:Dec, l:currentAscii)
+	endif
+endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
