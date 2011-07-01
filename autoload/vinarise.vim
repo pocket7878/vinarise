@@ -111,9 +111,22 @@ def vinariseFile() :
 
 vinariseFile()
 EOF
+		let l:hexLineArry = []
+		let l:AsciiLineArry = []
+		for i in range(0,len(b:localBuf[0])-1)
+			call extend(l:hexLineArry,split(b:localBuf[1][i]))
+			call extend(l:AsciiLineArry, split(b:localBuf[2][i],'\zs'))
+		endfor
+		let b:localBuf = [b:localBuf[0],l:hexLineArry, l:AsciiLineArry]
 	endif
+	"Convert data structure
 	for lineNum in range((b:pageNum - 1) * 100, (b:pageNum * 100 - 1) >= (len(b:localBuf[0]) - 1) ? (len(b:localBuf[0]) - 1) : b:pageNum * 100 - 1)
-		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, printf('%s %s | %s',b:localBuf[0][lineNum],b:localBuf[1][lineNum],b:localBuf[2][lineNum]))
+		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, 
+					\ printf('%s %s%s |  %s',
+					\ 		b:localBuf[0][lineNum],
+					\               join(b:localBuf[1][(lineNum * 16) : (lineNum * 16 + 15)]),
+					\		repeat(' ',(16 - len(b:localBuf[1][(lineNum * 16) :])) * 3),
+					\		join(b:localBuf[2][(lineNum * 16) : (lineNum * 16 + 15)], '')))
 	endfor
 	setlocal nomodifiable
 endfunction"}}}
@@ -217,13 +230,34 @@ EOF
 	endif
 endfunction"}}}
 
+"Edit function
+function! vinarise#removeHex()
+	let l:currentHexLine=split(strpart(getline("."),10,47))
+	let l:cursorPos = getpos(".")
+	call remove(b:localBuf[1], (((b:pageNum - 1) * 100 + l:cursorPos[1]-1) * 16  + (l:cursorPos[2] - 11)/3))
+	call remove(b:localBuf[2], (((b:pageNum - 1) * 100 + l:cursorPos[1]-1) * 16  + (l:cursorPos[2] - 11)/3))
+	if (len(b:localBuf[1][((len(b:localBuf[0]) -1) * 16 - 1) :]) ) == 1
+		echo "RemoveLast Line"
+		call remove(b:localBuf[0], -1)
+		if len(b:localBuf[0]) % 100 == 0
+			let b:pageNum -= 1
+			let l:cursorPos[1] = 100
+			let l:cursorPos[2] = 56
+		endif
+		call vinarise#open(b:lastFileName,b:lastOverWrite)
+		if l:cursorPos[1] == (len(b:localBuf[0]) - ((b:pageNum - 1) * 100) + 1)
+			let  l:cursorPos[1] -= 1
+			let  l:cursorPos[2] = 56 
+		endif
+		call setpos('.', l:cursorPos)
+	else 
+		call vinarise#open(b:lastFileName,b:lastOverWrite)
+		call setpos('.',cursorPos)	
+	endif
+endfunction
+
 "Write Binary File"{{{
 function! vinarise#writeOut(filePath)
-	let l:binaryBuf = []
-	for line in b:localBuf[1]
-		echo line
-		call add(l:binaryBuf, split(line))
-	endfor
 	let l:outFile = ''	
 	if a:filePath == ''
 		let l:outFile = bufname('%')
@@ -234,14 +268,15 @@ function! vinarise#writeOut(filePath)
 import os,vim
 from struct import *
 
-f = open(vim.eval('l:outFile'),'wb')
-
-lines = vim.eval('l:binaryBuf')
-for line in lines :
-	for hexStr in line :
+def writeOut() :
+	f = open(vim.eval('l:outFile'),'wb')
+	lines = vim.eval('b:localBuf[1]')
+	for hexStr in lines :
 		f.write(pack('B', int(hexStr,16)))
 
-f.close()
+	f.close()
+
+writeOut()
 EOF
 endfunction"}}}
 " Misc.
