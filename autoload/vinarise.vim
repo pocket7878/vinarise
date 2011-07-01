@@ -220,8 +220,9 @@ endfunction"}}}
 "Write Binary File"{{{
 function! vinarise#writeOut(filePath)
 	let l:binaryBuf = []
-	for line in b:localBuf
-		call add(l:binaryBuf, split(strpart(line,10,47)))
+	for line in b:localBuf[1]
+		echo line
+		call add(l:binaryBuf, split(line))
 	endfor
 	let l:outFile = ''	
 	if a:filePath == ''
