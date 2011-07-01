@@ -81,7 +81,7 @@ function! vinarise#open(filename, is_overwrite)"{{{
   let b:lastFileName = a:filename
   let b:lastOverWrite = a:is_overwrite
   if !exists('b:localBuf')
-	  let b:localBuf = []
+	  let b:localBuf = [[], [], []]
 	  python << EOF
 import mmap, os, vim
 def vimstr(s) :
@@ -104,14 +104,16 @@ def vinariseFile() :
 				hex_line += "{0:02x} ".format(num)
 				ascii_line += "." if num < 32 or num > 127 else char
 				pos += 1
-
-			vim.command('call add(b:localBuf, %s)' % vimstr('{0:07x}0: {1:48s}|  {2:16s}  '.format(line_number, hex_line, ascii_line)))
+			
+			vim.command('call add(b:localBuf[0], %s)' % vimstr('{0:07x}0:'.format(line_number)))
+			vim.command('call add(b:localBuf[1], %s)' % vimstr('{0:48s}'.format(hex_line)))
+			vim.command('call add(b:localBuf[2], %s)' % vimstr('{0:16s}'.format(ascii_line)))
 
 vinariseFile()
 EOF
 	endif
-	for lineNum in range((b:pageNum - 1) * 100, (b:pageNum * 100 - 1) >= (len(b:localBuf) -1) ? (len(b:localBuf) -1) : b:pageNum * 100 - 1)
-		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, b:localBuf[lineNum])
+	for lineNum in range((b:pageNum - 1) * 100, (b:pageNum * 100 - 1) >= (len(b:localBuf[0]) - 1) ? (len(b:localBuf[0]) - 1) : b:pageNum * 100 - 1)
+		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, printf('%s %s | %s',b:localBuf[0][lineNum],b:localBuf[1][lineNum],b:localBuf[2][lineNum]))
 	endfor
 	setlocal nomodifiable
 endfunction"}}}
@@ -119,20 +121,20 @@ endfunction"}}}
 "Page change function"{{{
 function! vinarise#nextPage() 
 	if exists('b:pageNum')
-		if (b:pageNum * 100 < (len(b:localBuf) -1))
+		if (b:pageNum * 100 < (len(b:localBuf[0]) -1))
 			let b:pageNum += 1
+			call vinarise#open(b:lastFileName,b:lastOverWrite)
 		endif
 	endif
-	call vinarise#open(b:lastFileName,b:lastOverWrite)
 endfunction
 
 function! vinarise#backPage() 
 	if exists('b:pageNum')
 		if (b:pageNum != 1)
 			let b:pageNum -= 1
+			call vinarise#open(b:lastFileName,b:lastOverWrite)
 		endif
 	endif
-	call vinarise#open(b:lastFileName,b:lastOverWrite)
 endfunction"}}}
 
 "Cursor move function"{{{
@@ -213,6 +215,33 @@ vim.command('let l:binStr = \'%s\'' % bin(int(vim.eval('l:Dec'),10))[2:])
 EOF
 		echo printf("Bin: %s Dec: %d Oct: %o Hex: %x Ascii: %s", l:binStr, l:Dec,l:Dec,l:Dec, l:currentAscii)
 	endif
+endfunction"}}}
+
+"Write Binary File"{{{
+function! vinarise#writeOut(filePath)
+	let l:binaryBuf = []
+	for line in b:localBuf
+		call add(l:binaryBuf, split(strpart(line,10,47)))
+	endfor
+	let l:outFile = ''	
+	if a:filePath == ''
+		let l:outFile = bufname('%')
+	else
+		let l:outFile = a:filePath
+	endif
+	python <<EOF
+import os,vim
+from struct import *
+
+f = open(vim.eval('l:outFile'),'wb')
+
+lines = vim.eval('l:binaryBuf')
+for line in lines :
+	for hexStr in line :
+		f.write(pack('B', int(hexStr,16)))
+
+f.close()
+EOF
 endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{

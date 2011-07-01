@@ -21,3 +21,5 @@ nmap <buffer><silent> % <Plug>(vinarise_moveCursorBetweenAsciiAndHex)
 noremap <buffer><silent> <Plug>(vinarise_showVinaryInfo) :<C-u>call vinarise#showVinaryInfo()<CR>
 
 nmap <buffer><silent> <Leader>i <Plug>(vinarise_showVinaryInfo)
+
+command! -buffer -nargs=? -complete=file WriteOut call vinarise#writeOut(<q-args>)
