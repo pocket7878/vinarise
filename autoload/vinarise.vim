@@ -71,7 +71,7 @@ function! vinarise#open(filename, is_overwrite)"{{{
 
   "silent % delete _
   call s:initialize_vinarise_buffer()
-  set modifiable
+  setlocal modifiable
 
   if !exists('b:pageNum')
 	  let b:pageNum = 1
@@ -131,7 +131,7 @@ EOF
 					\		repeat(' ',(16 - len(b:localBuf[1][(lineNum * 16) :])) * 3),
 					\		join(b:localBuf[2][(lineNum * 16) : (lineNum * 16 + 15)], '')))
 	endfor
-	set nomodifiable
+	setlocal nomodifiable
 endfunction"}}}
 
 "Page change function"{{{
@@ -252,7 +252,7 @@ function! s:isNumber(char)
 	endif
 endfunction
 
-function! vinarise#overWriteHex()
+function! s:overWriteHex()
 	let l:char = nr2char(getchar())
 	let l:cursorPos = getpos('.')
 	let l:HexIndex = ((b:pageNum - 1) * 100 * 16 
@@ -272,6 +272,32 @@ function! vinarise#overWriteHex()
 		call vinarise#open(b:lastFileName,b:lastOverWrite)
 		"Replace cursor
 		call setpos('.',l:cursorPos)
+	endif
+endfunction
+
+function! s:overWriteAscii()
+	let l:charDec = getchar()
+	let l:cursorPos = getpos('.')
+	let l:AsciiIndex = ((b:pageNum - 1) * 100 * 16 
+				\ 	+ (l:cursorPos[1] - 1)* 16
+				\	+ (l:cursorPos[2] - 62))
+	let l:newHex = printf('%x',l:charDec)
+	let b:localBuf[1][l:AsciiIndex] = l:newHex
+	let b:localBuf[2][l:AsciiIndex] = nr2char(str2nr(l:newHex,16))
+	"Redisplay Vinary
+	call vinarise#open(b:lastFileName,b:lastOverWrite)
+	"Replace cursor
+	call setpos('.',l:cursorPos)
+endfunction
+
+function! vinarise#overWriteVinary()
+	let l:cursorPos = getpos('.')
+	if (l:cursorPos[2] + l:cursorPos[3]) >= 11 && (l:cursorPos[2] + l:cursorPos[3]) <= 57
+		call s:overWriteHex()
+	elseif (l:cursorPos[2] + l:cursorPos[3]) >= 62 && (l:cursorPos[2] + l:cursorPos[3]) <= 77
+		call s:overWriteAscii()
+	else
+
 	endif
 endfunction
 
@@ -304,8 +330,9 @@ endfunction
 "Write Binary File"{{{
 function! vinarise#writeOut(filePath)
 	let l:outFile = ''	
+	echo a:filePath
 	if a:filePath == ''
-		let l:outFile = bufname('%')
+		let l:outFile = b:lastFileName
 	else
 		let l:outFile = a:filePath
 	endif

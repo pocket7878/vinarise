@@ -28,5 +28,5 @@ noremap <buffer><silent> <Plug>(vinarise_removeHex) :<C-u>call vinarise#removeHe
 
 nmap <buffer><silent> <BS> <Plug>(vinarise_removeHex)
 
-noremap <buffer><silent> <Plug>(vinarise_overwriteHex) :<C-u>call vinarise#overWriteHex()<CR>
+noremap <buffer><silent> <Plug>(vinarise_overwriteHex) :<C-u>call vinarise#overWriteVinary()<CR>
 nmap <buffer><silent> r <Plug>(vinarise_overwriteHex)
