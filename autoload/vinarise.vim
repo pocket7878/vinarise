@@ -131,6 +131,7 @@ EOF
 					\		repeat(' ',(16 - len(b:localBuf[1][(lineNum * 16) :])) * 3),
 					\		join(b:localBuf[2][(lineNum * 16) : (lineNum * 16 + 15)], '')))
 	endfor
+	set nomodifiable
 endfunction"}}}
 
 "Page change function"{{{
@@ -270,7 +271,7 @@ function! vinarise#overWriteHex()
 		"Redisplay Vinary
 		call vinarise#open(b:lastFileName,b:lastOverWrite)
 		"Replace cursor
-		call setpos(l:cursorPos)
+		call setpos('.',l:cursorPos)
 	endif
 endfunction
 
