@@ -24,7 +24,7 @@ nmap <buffer><silent> <Leader>i <Plug>(vinarise_showVinaryInfo)
 
 command! -buffer -nargs=? -complete=file WriteOut call vinarise#writeOut(<q-args>)
 
-noremap <buffer><silent> <Plug>(vinarise_removeHex) :<C-u>call vinarise#removeHex()<CR>
+noremap <buffer><silent> <Plug>(vinarise_removeHex) :<C-u>call vinarise#removeVinary()<CR>
 
 nmap <buffer><silent> <BS> <Plug>(vinarise_removeHex)
 

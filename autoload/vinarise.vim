@@ -301,11 +301,14 @@ function! vinarise#overWriteVinary()
 	endif
 endfunction
 
-function! vinarise#removeHex()
+function! s:removeHex()
 	let l:currentHexLine=split(strpart(getline("."),10,47))
 	let l:cursorPos = getpos(".")
-	call remove(b:localBuf[1], (((b:pageNum - 1) * 100 + l:cursorPos[1]-1) * 16  + (l:cursorPos[2] - 11)/3))
-	call remove(b:localBuf[2], (((b:pageNum - 1) * 100 + l:cursorPos[1]-1) * 16  + (l:cursorPos[2] - 11)/3))
+	let l:HexIndex = (((b:pageNum - 1) * 100 
+				\	+ l:cursorPos[1]-1) * 16  
+				\	+ (l:cursorPos[2] - 11)/3)
+	call remove(b:localBuf[1], l:HexIndex)
+	call remove(b:localBuf[2], l:HexIndex)
 	if (len(b:localBuf[1][((len(b:localBuf[0]) -1) * 16 - 1) :]) ) == 1
 		echo "RemoveLast Line"
 		call remove(b:localBuf[0], -1)
@@ -323,6 +326,43 @@ function! vinarise#removeHex()
 	else 
 		call vinarise#open(b:lastFileName,b:lastOverWrite)
 		call setpos('.',cursorPos)	
+	endif
+endfunction
+
+function! s:removeAscii()
+	let l:cursorPos = getpos(".")
+	let l:AsciiIndex = (((b:pageNum - 1) * 100 
+				\	+ l:cursorPos[1]-1) * 16  
+				\	+ (l:cursorPos[2] - 62))
+	call remove(b:localBuf[1], l:AsciiIndex)
+	call remove(b:localBuf[2], l:AsciiIndex)
+	if (len(b:localBuf[1][((len(b:localBuf[0]) -1) * 16 - 1) :]) ) == 1
+		call remove(b:localBuf[0], -1)
+		if len(b:localBuf[0]) % 100 == 0
+			let b:pageNum -= 1
+			let l:cursorPos[1] = 100
+			let l:cursorPos[2] = 77 
+		endif
+		call vinarise#open(b:lastFileName,b:lastOverWrite)
+		if l:cursorPos[1] == (len(b:localBuf[0]) - ((b:pageNum - 1) * 100) + 1)
+			let  l:cursorPos[1] -= 1
+			let  l:cursorPos[2] = 77
+		endif
+		call setpos('.', l:cursorPos)
+	else 
+		call vinarise#open(b:lastFileName,b:lastOverWrite)
+		call setpos('.',cursorPos)	
+	endif
+endfunction
+
+function! vinarise#removeVinary()
+	let l:cursorPos = getpos('.')
+	if (l:cursorPos[2] + l:cursorPos[3]) >= 11 && (l:cursorPos[2] + l:cursorPos[3]) <= 57
+		call s:removeHex()
+	elseif (l:cursorPos[2] + l:cursorPos[3]) >= 62 && (l:cursorPos[2] + l:cursorPos[3]) <= 77
+		call s:removeAscii()
+	else
+
 	endif
 endfunction
 "}}}
