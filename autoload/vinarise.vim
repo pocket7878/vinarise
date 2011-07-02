@@ -71,21 +71,23 @@ function! vinarise#open(filename, is_overwrite)"{{{
 
   "silent % delete _
   call s:initialize_vinarise_buffer()
-
-  " Print lines.
-  setlocal modifiable
+  set modifiable
 
   if !exists('b:pageNum')
 	  let b:pageNum = 1
   endif
+  "Save latest args
   let b:lastFileName = a:filename
   let b:lastOverWrite = a:is_overwrite
+
   if !exists('b:localBuf')
 	  let b:localBuf = [[], [], []]
 	  python << EOF
 import mmap, os, vim
+#escaping string to vimstyle
 def vimstr(s) :
 	return "'" + s.replace("'","''") + "'"
+#House data to vim buffer local array as vinary
 def vinariseFile() :
 	with open(vim.eval("l:filename"), "r+") as f:
 		# Open file by memory mapping.
@@ -111,6 +113,7 @@ def vinariseFile() :
 
 vinariseFile()
 EOF
+		"Convert data structure
 		let l:hexLineArry = []
 		let l:AsciiLineArry = []
 		for i in range(0,len(b:localBuf[0])-1)
@@ -119,7 +122,7 @@ EOF
 		endfor
 		let b:localBuf = [b:localBuf[0],l:hexLineArry, l:AsciiLineArry]
 	endif
-	"Convert data structure
+	"Print Page in buffer
 	for lineNum in range((b:pageNum - 1) * 100, (b:pageNum * 100 - 1) >= (len(b:localBuf[0]) - 1) ? (len(b:localBuf[0]) - 1) : b:pageNum * 100 - 1)
 		call setline((lineNum - ((b:pageNum - 1) * 100)) + 1, 
 					\ printf('%s %s%s |  %s',
@@ -128,7 +131,6 @@ EOF
 					\		repeat(' ',(16 - len(b:localBuf[1][(lineNum * 16) :])) * 3),
 					\		join(b:localBuf[2][(lineNum * 16) : (lineNum * 16 + 15)], '')))
 	endfor
-	setlocal nomodifiable
 endfunction"}}}
 
 "Page change function"{{{
@@ -230,7 +232,47 @@ EOF
 	endif
 endfunction"}}}
 
-"Edit function
+"Edit function"{{{
+function! s:isAlpha(char)
+	let l:nr = char2nr(a:char)
+	if (65 <= l:nr && l:nr <= 90) || (97 <= l:nr && l:nr <= 122)
+		return 1
+	else
+		return 0
+	endif
+endfunction
+
+function! s:isNumber(char)
+	let l:nr = char2nr(a:char)
+	if (48 <= l:nr && l:nr <= 57)
+		return 1
+	else
+		return 0
+	endif
+endfunction
+
+function! vinarise#overWriteHex(char)
+	let l:cursorPos = getpos('.')
+	let l:HexIndex = ((b:pageNum - 1) * 100 * 16 
+				\ 	+ (l:cursorPos[1] - 1)* 16
+				\	+ (l:cursorPos[2] - 11)/3)
+	let l:figure = (l:cursorPos[2] - 11) % 3 == 0 ? 1 : 0
+	let l:newChar = ''
+	if s:isAlpha(a:char) || s:isNumber(a:char)
+		if l:figure == 1
+			let l:newChar = join([a:char, b:localBuf[1][l:HexIndex][1 :]], '')
+		else
+			let l:newChar = join([b:localBuf[1][l:HexIndex][0], a:char], '')
+		endif
+		let b:localBuf[1][l:HexIndex] = l:newChar
+		let b:localBuf[2][l:HexIndex] = nr2char(str2nr(l:newChar,16))
+		"Redisplay Vinary
+		call vinarise#open(b:lastFileName,b:lastOverWrite)
+		"Replace cursor
+		call setpos('.',l:cursorPos)
+	endif
+endfunction
+
 function! vinarise#removeHex()
 	let l:currentHexLine=split(strpart(getline("."),10,47))
 	let l:cursorPos = getpos(".")
@@ -255,6 +297,7 @@ function! vinarise#removeHex()
 		call setpos('.',cursorPos)	
 	endif
 endfunction
+"}}}
 
 "Write Binary File"{{{
 function! vinarise#writeOut(filePath)
