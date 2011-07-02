@@ -233,9 +233,9 @@ EOF
 endfunction"}}}
 
 "Edit function"{{{
-function! s:isAlpha(char)
+function! s:isHexAlpha(char)
 	let l:nr = char2nr(a:char)
-	if (65 <= l:nr && l:nr <= 90) || (97 <= l:nr && l:nr <= 122)
+	if (97 <= l:nr && l:nr <= 102)
 		return 1
 	else
 		return 0
@@ -251,25 +251,26 @@ function! s:isNumber(char)
 	endif
 endfunction
 
-function! vinarise#overWriteHex(char)
+function! vinarise#overWriteHex()
+	let l:char = nr2char(getchar())
 	let l:cursorPos = getpos('.')
 	let l:HexIndex = ((b:pageNum - 1) * 100 * 16 
 				\ 	+ (l:cursorPos[1] - 1)* 16
 				\	+ (l:cursorPos[2] - 11)/3)
 	let l:figure = (l:cursorPos[2] - 11) % 3 == 0 ? 1 : 0
 	let l:newChar = ''
-	if s:isAlpha(a:char) || s:isNumber(a:char)
+	if s:isHexAlpha(l:char) || s:isNumber(l:char)
 		if l:figure == 1
-			let l:newChar = join([a:char, b:localBuf[1][l:HexIndex][1 :]], '')
+			let l:newChar = join([l:char, b:localBuf[1][l:HexIndex][1 :]], '')
 		else
-			let l:newChar = join([b:localBuf[1][l:HexIndex][0], a:char], '')
+			let l:newChar = join([b:localBuf[1][l:HexIndex][0], l:char], '')
 		endif
 		let b:localBuf[1][l:HexIndex] = l:newChar
 		let b:localBuf[2][l:HexIndex] = nr2char(str2nr(l:newChar,16))
 		"Redisplay Vinary
 		call vinarise#open(b:lastFileName,b:lastOverWrite)
 		"Replace cursor
-		call setpos('.',l:cursorPos)
+		call setpos(l:cursorPos)
 	endif
 endfunction
 

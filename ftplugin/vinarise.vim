@@ -27,3 +27,6 @@ command! -buffer -nargs=? -complete=file WriteOut call vinarise#writeOut(<q-args
 noremap <buffer><silent> <Plug>(vinarise_removeHex) :<C-u>call vinarise#removeHex()<CR>
 
 nmap <buffer><silent> <BS> <Plug>(vinarise_removeHex)
+
+noremap <buffer><silent> <Plug>(vinarise_overwriteHex) :<C-u>call vinarise#overWriteHex()<CR>
+nmap <buffer><silent> r <Plug>(vinarise_overwriteHex)
