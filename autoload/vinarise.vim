@@ -422,22 +422,16 @@ def createBitmapImage():
 	#if 0 < buflen <= 128
 	elif buflen <= 128:
 		for x in range(0, buflen):
-			img.putpixel((x,0),(int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % x))),
-					    int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % x))),
-					    int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % x)))))
+			img.putpixel((x,0),tuple(map((lambda x: int(x)), vim.eval('s:calcColor(\'%s\')' % vim.eval('b:localBuf[1][%d]' % x)))))
 	else:
 		for y in range(0, buflen / 128):
 			for x in range(0, 128):
 				index = y * 128 + x
-				img.putpixel( (x, y), (int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % index))),
-						       int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % index))),
-						       int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % index)))))
+				img.putpixel( (x, y), tuple(map((lambda x: int(x)), vim.eval('s:calcColor(\'%s\')' % vim.eval('b:localBuf[1][%d]' % x)))))
 
 		for x in range(0, buflen % 128):
 			index = (buflen/128) * 128 + x
-			img.putpixel( (x, buflen/128), (int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % index))),
-							int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % index))),
-							int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % index)))))
+			img.putpixel( (x, buflen/128), tuple(map((lambda x: int(x)), vim.eval('s:calcColor(\'%s\')' % vim.eval('b:localBuf[1][%d]' % index)))))
 
 	img.save(vim.eval('a:filepath'), "PNG")
 
