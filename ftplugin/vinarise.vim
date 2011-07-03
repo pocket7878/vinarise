@@ -30,3 +30,5 @@ nmap <buffer><silent> <BS> <Plug>(vinarise_removeHex)
 
 noremap <buffer><silent> <Plug>(vinarise_overwriteHex) :<C-u>call vinarise#overWriteVinary()<CR>
 nmap <buffer><silent> r <Plug>(vinarise_overwriteHex)
+
+command! -buffer -nargs=1 -complete=file WriteBimapView call vinarise#writeBitmapView(<f-args>)

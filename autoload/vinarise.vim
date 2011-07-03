@@ -391,6 +391,59 @@ def writeOut() :
 writeOut()
 EOF
 endfunction"}}}
+
+"Bitmap view""{{{
+function! s:calcColor(hexStr)
+	let l:nr = str2nr(a:hexStr,16)
+	if l:nr == str2nr('00', 16)
+		return [255, 255, 255]
+	elseif str2nr('01',16) <= l:nr && l:nr <= str2nr('1F', 16)
+		return [0,255,255]
+	elseif str2nr('20', 16) <= l:nr && l:nr <= str2nr('7F', 16)
+		return [255, 0,0]
+	elseif str2nr('80', 16) <= l:nr && l:nr <= str2nr('FF', 16)
+		return [255, 255, 255]
+	endif
+endfunction
+
+function! vinarise#writeBitmapView(filepath)
+	"Fillable image line
+	let l:fillAbleImgLine = len(b:localBuf[1])/128 
+	"rest line
+	let l:rest = 128 - len(b:localBuf[1])%128
+	python<<EOM
+from PIL import Image
+def createBitmapImage():
+	img = Image.new('RGB', (128, int(vim.eval('l:fillAbleImgLine')) + 1))
+	buflen = int(vim.eval('len(b:localBuf[1])'))
+	#if there is no bite in vinary
+	if buflen == 0:
+		return
+	#if 0 < buflen <= 128
+	elif buflen <= 128:
+		for x in range(0, buflen):
+			img.putpixel((x,0),(int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % x))),
+					    int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % x))),
+					    int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % x)))))
+	else:
+		for y in range(0, buflen / 128):
+			for x in range(0, 128):
+				index = y * 128 + x
+				img.putpixel( (x, y), (int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % index))),
+						       int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % index))),
+						       int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % index)))))
+
+		for x in range(0, buflen % 128):
+			index = (buflen/128) * 128 + x
+			img.putpixel( (x, buflen/128), (int(vim.eval('s:calcColor(\'%s\')[0]' % vim.eval('b:localBuf[1][%d]' % index))),
+							int(vim.eval('s:calcColor(\'%s\')[1]' % vim.eval('b:localBuf[1][%d]' % index))),
+							int(vim.eval('s:calcColor(\'%s\')[2]' % vim.eval('b:localBuf[1][%d]' % index)))))
+
+	img.save(vim.eval('a:filepath'), "PNG")
+
+createBitmapImage()
+EOM
+endfunction"}}}
 " Misc.
 function! s:initialize_vinarise_buffer()"{{{
   " The current buffer is initialized.
